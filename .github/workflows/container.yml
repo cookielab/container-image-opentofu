@@ -1,0 +1,215 @@
+name: Container Image
+on:
+  push:
+    branches:
+      - "main"
+    tags:
+      - "**"
+
+env:
+  # renovate: datasource=github-releases depName=opentofu/opentofu
+  opentofu_version: "1.10.3"
+  # renovate: datasource=github-releases depName=terraform-linters/tflint
+  tflint_version: "0.57.0"
+  # renovate: datasource=github-releases depName=aquasecurity/tfsec
+  tfsec_version: "1.28.14"
+  # renovate: datasource=github-releases depName=dineshba/tf-summarize
+  tf_summarize_version: "0.3.14"
+
+jobs:
+  build:
+    name: Build container image and push it to registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR Public
+        id: login-ecr-public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Parse version
+        id: get-version
+        uses: battila7/get-version-action@v2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push - testing - slim
+        uses: docker/build-push-action@v6
+        timeout-minutes: 15
+        if: ${{ !steps.get-version.outputs.is-semver }}
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            OPENTOFU_VERSION=${{ env.opentofu_version }}
+            TFLINT_VERSION=${{ env.tflint_version }}
+            TFSEC_VERSION=${{ env.tfsec_version }}
+            TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITHUB_TOKEN=${{ github.token }}
+          tags: |
+            cookielab/opentofu:${{ github.ref_name }}-slim
+            public.ecr.aws/cookielab/opentofu:${{ github.ref_name }}-slim
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}-slim
+
+      - name: Build and push - testing - alpine
+        uses: docker/build-push-action@v6
+        timeout-minutes: 15
+        if: ${{ !steps.get-version.outputs.is-semver }}
+        with:
+          context: .
+          file: ./Dockerfile.alpine
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            OPENTOFU_VERSION=${{ env.opentofu_version }}
+            TFLINT_VERSION=${{ env.tflint_version }}
+            TFSEC_VERSION=${{ env.tfsec_version }}
+            TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITHUB_TOKEN=${{ github.token }}
+          tags: |
+            cookielab/opentofu:${{ github.ref_name }}-alpine
+            public.ecr.aws/cookielab/opentofu:${{ github.ref_name }}-alpine
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}-alpine
+
+      - name: Build and push - pre-release - slim
+        uses: docker/build-push-action@v6
+        timeout-minutes: 15
+        if: ${{ steps.get-version.outputs.is-semver && steps.get-version.outputs.prerelease != '' }}
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            OPENTOFU_VERSION=${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}
+            TFLINT_VERSION=${{ env.tflint_version }}
+            TFSEC_VERSION=${{ env.tfsec_version }}
+            TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITHUB_TOKEN=${{ github.token }}
+          tags: |
+            cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-slim
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-slim
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.version-without-v }}-slim
+
+      - name: Build and push - pre-release - alpine
+        uses: docker/build-push-action@v6
+        timeout-minutes: 15
+        if: ${{ steps.get-version.outputs.is-semver && steps.get-version.outputs.prerelease != '' }}
+        with:
+          context: .
+          file: ./Dockerfile.alpine
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            OPENTOFU_VERSION=${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}
+            TFLINT_VERSION=${{ env.tflint_version }}
+            TFSEC_VERSION=${{ env.tfsec_version }}
+            TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITHUB_TOKEN=${{ github.token }}
+          tags: |
+            cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-alpine
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-alpine
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.version-without-v }}-alpine
+
+      - name: Build and push - stable - slim
+        uses: docker/build-push-action@v6
+        timeout-minutes: 15
+        if: ${{ steps.get-version.outputs.is-semver && steps.get-version.outputs.prerelease == '' }}
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            OPENTOFU_VERSION=${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}
+            TFLINT_VERSION=${{ env.tflint_version }}
+            TFSEC_VERSION=${{ env.tfsec_version }}
+            TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITHUB_TOKEN=${{ github.token }}
+          tags: |
+            cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-slim
+            cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}
+            cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}-slim
+            cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}
+            cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}-slim
+            cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}
+            cookielab/opentofu:${{ steps.get-version.outputs.major }}-slim
+            cookielab/opentofu:${{ steps.get-version.outputs.major }}
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-slim
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}-slim
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}-slim
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.major }}-slim
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.major }}
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.version-without-v }}-slim
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.version-without-v }}
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}-slim
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}-slim
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.major }}-slim
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.major }}
+
+      - name: Build and push - stable - alpine
+        uses: docker/build-push-action@v6
+        timeout-minutes: 15
+        if: ${{ steps.get-version.outputs.is-semver && steps.get-version.outputs.prerelease == '' }}
+        with:
+          context: .
+          file: ./Dockerfile.alpine
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            OPENTOFU_VERSION=${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}
+            TFLINT_VERSION=${{ env.tflint_version }}
+            TFSEC_VERSION=${{ env.tfsec_version }}
+            TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITHUB_TOKEN=${{ github.token }}
+          tags: |
+            cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-alpine
+            cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}-alpine
+            cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}-alpine
+            cookielab/opentofu:${{ steps.get-version.outputs.major }}-alpine
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-alpine
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}-alpine
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}-alpine
+            public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.major }}-alpine
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.version-without-v }}-alpine
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}-alpine
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}-alpine
+            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.major }}-alpine
