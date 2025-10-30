@@ -7,14 +7,16 @@ on:
       - "**"
 
 env:
-  # renovate: datasource=github-releases depName=opentofu/opentofu
-  opentofu_version: "1.10.3"
   # renovate: datasource=github-releases depName=terraform-linters/tflint
-  tflint_version: "0.57.0"
+  tflint_version: "0.59.1"
   # renovate: datasource=github-releases depName=aquasecurity/tfsec
   tfsec_version: "1.28.14"
   # renovate: datasource=github-releases depName=dineshba/tf-summarize
   tf_summarize_version: "0.3.14"
+  # renovate: datasource=github-releases depName=opentofu/opentofu
+  opentofu_version: "1.10.6"
+  # renovate: datasource=gitlab-releases depName=components/opentofu
+  gitlab_tofu: "3.10.0"
 
 jobs:
   build:
@@ -27,7 +29,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -43,7 +45,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
@@ -74,10 +76,10 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
-            OPENTOFU_VERSION=${{ env.opentofu_version }}
             TFLINT_VERSION=${{ env.tflint_version }}
             TFSEC_VERSION=${{ env.tfsec_version }}
             TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITLAB_TOFU=${{ env.gitlab_tofu }}
             GITHUB_TOKEN=${{ github.token }}
           tags: |
             cookielab/opentofu:${{ github.ref_name }}-slim
@@ -98,6 +100,7 @@ jobs:
             TFLINT_VERSION=${{ env.tflint_version }}
             TFSEC_VERSION=${{ env.tfsec_version }}
             TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITLAB_TOFU=${{ env.gitlab_tofu }}
             GITHUB_TOKEN=${{ github.token }}
           tags: |
             cookielab/opentofu:${{ github.ref_name }}-alpine
@@ -118,6 +121,7 @@ jobs:
             TFLINT_VERSION=${{ env.tflint_version }}
             TFSEC_VERSION=${{ env.tfsec_version }}
             TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITLAB_TOFU=${{ env.gitlab_tofu }}
             GITHUB_TOKEN=${{ github.token }}
           tags: |
             cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-slim
@@ -138,6 +142,7 @@ jobs:
             TFLINT_VERSION=${{ env.tflint_version }}
             TFSEC_VERSION=${{ env.tfsec_version }}
             TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITLAB_TOFU=${{ env.gitlab_tofu }}
             GITHUB_TOKEN=${{ github.token }}
           tags: |
             cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-alpine
@@ -158,16 +163,11 @@ jobs:
             TFLINT_VERSION=${{ env.tflint_version }}
             TFSEC_VERSION=${{ env.tfsec_version }}
             TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITLAB_TOFU=${{ env.gitlab_tofu }}
             GITHUB_TOKEN=${{ github.token }}
           tags: |
             cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-slim
             cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}
-            cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}-slim
-            cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}
-            cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}-slim
-            cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}
-            cookielab/opentofu:${{ steps.get-version.outputs.major }}-slim
-            cookielab/opentofu:${{ steps.get-version.outputs.major }}
             public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-slim
             public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}
             public.ecr.aws/cookielab/opentofu:${{ steps.get-version.outputs.major }}.${{ steps.get-version.outputs.minor }}.${{ steps.get-version.outputs.patch }}-slim
@@ -199,6 +199,7 @@ jobs:
             TFLINT_VERSION=${{ env.tflint_version }}
             TFSEC_VERSION=${{ env.tfsec_version }}
             TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
+            GITLAB_TOFU=${{ env.gitlab_tofu }}
             GITHUB_TOKEN=${{ github.token }}
           tags: |
             cookielab/opentofu:${{ steps.get-version.outputs.version-without-v }}-alpine
