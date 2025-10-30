@@ -6,9 +6,9 @@ ARG TARGETARCH
 
 ARG OPENTOFU_VERSION
 
-RUN wget -q -O /tmp/tofu.zip https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/tofu_${OPENTOFU_VERSION}_linux_${TARGETARCH}.zip
-RUN unzip /tmp/tofu.zip -d /usr/local/bin
-RUN rm /tmp/tofu.zip
+RUN wget -q -O /tmp/opentofu.tar.gz https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/tofu_${OPENTOFU_VERSION}_linux_${TARGETARCH}.tar.gz
+RUN tar -xzf /tmp/opentofu.tar.gz -C /usr/local/bin
+RUN rm /tmp/opentofu.tar.gz
 
 ARG TFLINT_VERSION
 
@@ -31,10 +31,10 @@ RUN wget -q -O /tmp/tf-sum.tar.gz https://github.com/dineshba/tf-summarize/relea
 RUN tar -xzf /tmp/tf-sum.tar.gz -C /usr/local/bin
 RUN rm -f /tmp/tf-sum.tar.gz
 
-ARG GITLAB_TERRAFORM
+ARG GITLAB_TOFU
 
-RUN wget -q -O /usr/local/bin/gitlab-terraform https://gitlab.com/gitlab-org/terraform-images/-/raw/v${GITLAB_TERRAFORM}/src/bin/gitlab-terraform.sh
-RUN chmod +x /usr/local/bin/gitlab-terraform
+RUN wget -q -O /usr/local/bin/gitlab-tofu https://gitlab.com/components/opentofu/-/raw/${GITLAB_TOFU}/src/gitlab-tofu.sh
+RUN chmod +x /usr/local/bin/gitlab-tofu
 
 FROM cookielab/alpine:3.21
 

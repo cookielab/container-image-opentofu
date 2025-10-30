@@ -6,9 +6,9 @@ ARG TARGETARCH
 
 ARG OPENTOFU_VERSION
 
-RUN wget -q -O /tmp/tofu.zip https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/tofu_${OPENTOFU_VERSION}_linux_${TARGETARCH}.zip
-RUN unzip /tmp/tofu.zip -d /usr/local/bin
-RUN rm /tmp/tofu.zip
+RUN wget -q -O /tmp/opentofu.tar.gz https://github.com/opentofu/opentofu/releases/download/v${OPENTOFU_VERSION}/tofu_${OPENTOFU_VERSION}_linux_${TARGETARCH}.tar.gz
+RUN tar -xzf /tmp/opentofu.tar.gz -C /usr/local/bin
+RUN rm /tmp/opentofu.tar.gz
 
 ARG TFLINT_VERSION
 
@@ -30,6 +30,11 @@ ARG TF_SUMMARIZE_VERSION
 RUN wget -q -O /tmp/tf-sum.tar.gz https://github.com/dineshba/tf-summarize/releases/download/v${TF_SUMMARIZE_VERSION}/tf-summarize_linux_${TARGETARCH}.tar.gz
 RUN tar -xzf /tmp/tf-sum.tar.gz -C /usr/local/bin
 RUN rm -f /tmp/tf-sum.tar.gz
+
+ARG GITLAB_TOFU
+
+RUN wget -q -O /usr/local/bin/gitlab-tofu https://gitlab.com/components/opentofu/-/raw/${GITLAB_TOFU}/src/gitlab-tofu.sh
+RUN chmod +x /usr/local/bin/gitlab-tofu
 
 FROM cookielab/slim:12.10
 
