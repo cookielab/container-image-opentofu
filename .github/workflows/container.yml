@@ -8,15 +8,15 @@ on:
 
 env:
   # renovate: datasource=github-releases depName=terraform-linters/tflint
-  tflint_version: "0.59.1"
+  tflint_version: "0.61.0"
   # renovate: datasource=github-releases depName=aquasecurity/tfsec
   tfsec_version: "1.28.14"
   # renovate: datasource=github-releases depName=dineshba/tf-summarize
-  tf_summarize_version: "0.3.14"
+  tf_summarize_version: "0.3.20"
   # renovate: datasource=github-releases depName=opentofu/opentofu
-  opentofu_version: "1.10.6"
+  opentofu_version: "1.11.5"
   # renovate: datasource=gitlab-releases depName=components/opentofu
-  gitlab_tofu: "3.10.0"
+  gitlab_tofu: "4.5.0"
 
 jobs:
   build:
