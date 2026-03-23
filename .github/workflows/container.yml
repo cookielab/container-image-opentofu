@@ -76,6 +76,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           build-args: |
+            OPENTOFU_VERSION=${{ env.opentofu_version }}
             TFLINT_VERSION=${{ env.tflint_version }}
             TFSEC_VERSION=${{ env.tfsec_version }}
             TF_SUMMARIZE_VERSION=${{ env.tf_summarize_version }}
