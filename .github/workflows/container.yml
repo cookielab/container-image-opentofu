@@ -67,7 +67,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Build and push - testing - slim
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         timeout-minutes: 15
         if: ${{ !steps.get-version.outputs.is-semver }}
         with:
@@ -88,7 +88,7 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ github.ref_name }}-slim
 
       - name: Build and push - testing - alpine
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         timeout-minutes: 15
         if: ${{ !steps.get-version.outputs.is-semver }}
         with:
@@ -109,7 +109,7 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ github.ref_name }}-alpine
 
       - name: Build and push - pre-release - slim
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         timeout-minutes: 15
         if: ${{ steps.get-version.outputs.is-semver && steps.get-version.outputs.prerelease != '' }}
         with:
@@ -130,7 +130,7 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.version-without-v }}-slim
 
       - name: Build and push - pre-release - alpine
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         timeout-minutes: 15
         if: ${{ steps.get-version.outputs.is-semver && steps.get-version.outputs.prerelease != '' }}
         with:
@@ -151,7 +151,7 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.version-without-v }}-alpine
 
       - name: Build and push - stable - slim
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         timeout-minutes: 15
         if: ${{ steps.get-version.outputs.is-semver && steps.get-version.outputs.prerelease == '' }}
         with:
@@ -187,7 +187,7 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.major }}
 
       - name: Build and push - stable - alpine
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         timeout-minutes: 15
         if: ${{ steps.get-version.outputs.is-semver && steps.get-version.outputs.prerelease == '' }}
         with:
