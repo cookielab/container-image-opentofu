@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM cookielab/slim:12.10 AS build
 
 RUN apt update && apt install -y wget zip
@@ -43,12 +44,11 @@ RUN apt update && apt install -y openssl wget curl zip python3 tzdata jq git idn
 
 COPY --from=build /usr/local/bin /usr/local/bin
 
-ARG GITHUB_TOKEN
-
 USER 1987
 
 COPY --chown=container:container .tflint.hcl /container/
-RUN tflint --init
+RUN --mount=type=secret,id=github_token,mode=0444 \
+  GITHUB_TOKEN="$(cat /run/secrets/github_token)" tflint --init
 
 RUN touch /container/.terraformrc
 

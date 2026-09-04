@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM cookielab/alpine:3.21 AS build
 
 RUN apk --update --no-cache add wget zip
@@ -42,12 +43,11 @@ RUN apk --update --no-cache add openssl wget curl zip python3 tzdata jq git idn2
 
 COPY --from=build /usr/local/bin /usr/local/bin
 
-ARG GITHUB_TOKEN
-
 USER 1987
 
 COPY --chown=container:container .tflint.hcl /container/
-RUN tflint --init
+RUN --mount=type=secret,id=github_token,mode=0444 \
+  GITHUB_TOKEN="$(cat /run/secrets/github_token)" tflint --init
 
 RUN touch /container/.terraformrc
 
